@@ -1,6 +1,9 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
 import { BookOpen } from "lucide-react";
+import { motion } from "framer-motion";
 
 import { IconBadge } from "@/components/icon-badge";
 import { formatPrice } from "@/lib/format";
@@ -27,7 +30,13 @@ export const CourseCard = ({
 }: CourseCardProps) => {
   return (
     <Link href={`/courses/${id}`}>
-      <div className="group hover:shadow-sm transition overflow-hidden border rounded-lg p-3 h-full">
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.22 }}
+        whileHover={{ y: -2 }}
+        className="group hover:shadow-sm transition overflow-hidden border rounded-lg p-3 h-full"
+      >
         <div className="relative w-full aspect-video rounded-md overflow-hidden">
           <Image
             fill
@@ -63,7 +72,7 @@ export const CourseCard = ({
             </p>
           )}
         </div>
-      </div>
+      </motion.div>
     </Link>
   )
 }

@@ -1,4 +1,4 @@
-import { auth } from "@clerk/nextjs";
+import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 
 import { getAnalytics } from "@/actions/get-analytics";
@@ -20,16 +20,20 @@ const AnalyticsPage = async () => {
   } = await getAnalytics(userId);
 
   return ( 
-    <div className="p-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+    <div className="p-6 space-y-6 max-w-7xl">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <DataCard
           label="Total Revenue"
           value={totalRevenue}
+          icon="revenue"
+          helper="Net earnings across all paid enrollments"
           shouldFormat
         />
         <DataCard
           label="Total Sales"
           value={totalSales}
+          icon="sales"
+          helper="Number of successful purchases"
         />
       </div>
       <Chart

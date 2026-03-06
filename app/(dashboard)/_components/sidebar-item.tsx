@@ -1,5 +1,6 @@
 "use client";
 
+import { motion } from "framer-motion";
 import { LucideIcon } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 
@@ -29,11 +30,15 @@ export const SidebarItem = ({
   }
 
   return (
-    <button
+    <motion.button
       onClick={onClick}
       type="button"
+      initial={{ opacity: 0, x: -10 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ duration: 0.2 }}
+      whileHover={{ x: 2 }}
       className={cn(
-        "flex items-center gap-x-2 text-slate-500 text-sm font-[500] pl-6 transition-all hover:text-slate-600 hover:bg-slate-300/20",
+        "flex w-full items-center gap-x-2 text-slate-500 text-sm font-[500] pl-6 transition-all hover:text-slate-600 hover:bg-slate-300/20",
         isActive && "text-sky-700 bg-sky-200/20 hover:bg-sky-200/20 hover:text-sky-700"
       )}
     >
@@ -49,10 +54,10 @@ export const SidebarItem = ({
       </div>
       <div
         className={cn(
-          "ml-auto opacity-0 border-2 border-sky-700 h-full transition-all",
+          "ml-auto h-full w-[3px] bg-sky-700 opacity-0 transition-all",
           isActive && "opacity-100"
         )}
       />
-    </button>
+    </motion.button>
   )
 }

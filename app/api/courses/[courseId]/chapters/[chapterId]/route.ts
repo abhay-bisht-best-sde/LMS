@@ -1,6 +1,7 @@
 import Mux from "@mux/mux-node";
-import { auth } from "@clerk/nextjs";
+import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
+import { utapi } from "uploadthing/server";
 
 import { db } from "@/lib/db";
 
@@ -8,6 +9,26 @@ const { Video } = new Mux(
   process.env.MUX_TOKEN_ID!,
   process.env.MUX_TOKEN_SECRET!,
 );
+
+const getUploadThingFileKey = (url: string) => {
+  try {
+    const parsedUrl = new URL(url);
+    const isUploadThingUrl =
+      parsedUrl.hostname.includes("utfs.io") ||
+      parsedUrl.hostname.includes("uploadthing");
+    if (!isUploadThingUrl) {
+      return null;
+    }
+    const pathParts = parsedUrl.pathname.split("/").filter(Boolean);
+    const fileIndex = pathParts.indexOf("f");
+    if (fileIndex !== -1 && pathParts[fileIndex + 1]) {
+      return pathParts[fileIndex + 1];
+    }
+    return pathParts[pathParts.length - 1] || null;
+  } catch {
+    return null;
+  }
+};
 
 export async function DELETE(
   req: Request,
@@ -20,23 +41,24 @@ export async function DELETE(
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const ownCourse = await db.course.findUnique({
-      where: {
-        id: params.courseId,
-        userId,
-      }
-    });
+    const [ownCourse, chapter] = await Promise.all([
+      db.course.findUnique({
+        where: {
+          id: params.courseId,
+          userId,
+        }
+      }),
+      db.chapter.findUnique({
+        where: {
+          id: params.chapterId,
+          courseId: params.courseId,
+        }
+      }),
+    ]);
 
     if (!ownCourse) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
-
-    const chapter = await db.chapter.findUnique({
-      where: {
-        id: params.chapterId,
-        courseId: params.courseId,
-      }
-    });
 
     if (!chapter) {
       return new NextResponse("Not Found", { status: 404 });
@@ -102,23 +124,24 @@ export async function PATCH(
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const ownCourse = await db.course.findUnique({
-      where: {
-        id: params.courseId,
-        userId
-      }
-    });
+    const [ownCourse, existingChapter] = await Promise.all([
+      db.course.findUnique({
+        where: {
+          id: params.courseId,
+          userId
+        }
+      }),
+      db.chapter.findUnique({
+        where: {
+          id: params.chapterId,
+          courseId: params.courseId,
+        }
+      }),
+    ]);
 
     if (!ownCourse) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
-
-    const existingChapter = await db.chapter.findUnique({
-      where: {
-        id: params.chapterId,
-        courseId: params.courseId,
-      }
-    });
 
     if (!existingChapter) {
       return new NextResponse("Not Found", { status: 404 });
@@ -137,6 +160,17 @@ export async function PATCH(
     const videoUrlChanged = values.videoUrl !== undefined && values.videoUrl !== existingChapter.videoUrl;
 
     if (videoUrlChanged && values.videoUrl) {
+      if (existingChapter.videoUrl) {
+        const existingFileKey = getUploadThingFileKey(existingChapter.videoUrl);
+        if (existingFileKey) {
+          try {
+            await utapi.deleteFiles(existingFileKey);
+          } catch (error) {
+            console.log("[UPLOADTHING_DELETE_ERROR]", error);
+          }
+        }
+      }
+
       const existingMuxData = await db.muxData.findFirst({
         where: {
           chapterId: params.chapterId,

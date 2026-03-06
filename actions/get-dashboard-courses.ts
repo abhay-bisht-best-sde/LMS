@@ -1,11 +1,11 @@
-import { Category, Chapter, Course } from "@prisma/client";
+import { Category, Course } from "@prisma/client";
 
 import { db } from "@/lib/db";
-import { getProgress } from "@/actions/get-progress";
+import { getCourseProgressMap } from "@/actions/get-course-progress-map";
 
 type CourseWithProgressWithCategory = Course & {
-  category: Category;
-  chapters: Chapter[];
+  category: Category | null;
+  chapters: { id: string }[];
   progress: number | null;
 };
 
@@ -27,7 +27,10 @@ export const getDashboardCourses = async (userId: string): Promise<DashboardCour
             chapters: {
               where: {
                 isPublished: true,
-              }
+              },
+              select: {
+                id: true,
+              },
             }
           }
         }
@@ -36,13 +39,18 @@ export const getDashboardCourses = async (userId: string): Promise<DashboardCour
 
     const courses = purchasedCourses.map((purchase) => purchase.course) as CourseWithProgressWithCategory[];
 
-    for (let course of courses) {
-      const progress = await getProgress(userId, course.id);
-      course["progress"] = progress;
-    }
+    const progressMap = await getCourseProgressMap(
+      userId,
+      courses.map((course) => course.id)
+    );
 
-    const completedCourses = courses.filter((course) => course.progress === 100);
-    const coursesInProgress = courses.filter((course) => (course.progress ?? 0) < 100);
+    const coursesWithProgress = courses.map((course) => ({
+      ...course,
+      progress: progressMap[course.id] ?? 0,
+    }));
+
+    const completedCourses = coursesWithProgress.filter((course) => course.progress === 100);
+    const coursesInProgress = coursesWithProgress.filter((course) => (course.progress ?? 0) < 100);
 
     return {
       completedCourses,

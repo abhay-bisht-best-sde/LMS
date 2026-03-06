@@ -1,12 +1,5 @@
-import Image from "next/image";
+import { BrandLogo } from "@/components/brand-logo";
 
 export const Logo = () => {
-  return (
-    <Image
-      height={130}
-      width={150}
-      alt="logo"
-      src="/genomeLogo.png"
-    />
-  )
-}
+  return <BrandLogo />;
+};

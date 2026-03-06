@@ -1,4 +1,4 @@
-import { auth } from "@clerk/nextjs";
+import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Eye, LayoutDashboard, Video } from "lucide-react";
@@ -79,6 +79,7 @@ const ChapterIdPage = async ({
                 </span>
               </div>
               <ChapterActions
+                key={`actions-${params.chapterId}`}
                 disabled={!isComplete}
                 courseId={params.courseId}
                 chapterId={params.chapterId}
@@ -97,11 +98,13 @@ const ChapterIdPage = async ({
                 </h2>
               </div>
               <ChapterTitleForm
+                key={`title-${params.chapterId}`}
                 initialData={chapter}
                 courseId={params.courseId}
                 chapterId={params.chapterId}
               />
               <ChapterDescriptionForm
+                key={`description-${params.chapterId}`}
                 initialData={chapter}
                 courseId={params.courseId}
                 chapterId={params.chapterId}
@@ -115,6 +118,7 @@ const ChapterIdPage = async ({
                 </h2>
               </div>
               <ChapterAccessForm
+                key={`access-${params.chapterId}`}
                 initialData={chapter}
                 courseId={params.courseId}
                 chapterId={params.chapterId}
@@ -129,6 +133,7 @@ const ChapterIdPage = async ({
               </h2>
             </div>
             <ChapterVideoForm
+              key={`video-${params.chapterId}`}
               initialData={chapter}
               chapterId={params.chapterId}
               courseId={params.courseId}

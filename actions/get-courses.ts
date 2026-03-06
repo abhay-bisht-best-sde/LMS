@@ -1,6 +1,6 @@
 import { Category, Course } from "@prisma/client";
 
-import { getProgress } from "@/actions/get-progress";
+import { getCourseProgressMap } from "@/actions/get-course-progress-map";
 import { db } from "@/lib/db";
 
 type CourseWithProgressWithCategory = Course & {
@@ -21,13 +21,20 @@ export const getCourses = async ({
   categoryId
 }: GetCourses): Promise<CourseWithProgressWithCategory[]> => {
   try {
+    const normalizedTitle = title?.trim();
+
     const courses = await db.course.findMany({
       where: {
         isPublished: true,
-        title: {
-          contains: title,
-        },
-        categoryId,
+        ...(normalizedTitle
+          ? {
+              title: {
+                contains: normalizedTitle,
+                mode: "insensitive",
+              },
+            }
+          : {}),
+        ...(categoryId ? { categoryId } : {}),
       },
       include: {
         category: true,
@@ -50,22 +57,26 @@ export const getCourses = async ({
       }
     });
 
-    const coursesWithProgress: CourseWithProgressWithCategory[] = await Promise.all(
-      courses.map(async course => {
+    const purchasedCourseIds = courses
+      .filter((course) => course.purchases.length > 0)
+      .map((course) => course.id);
+
+    const progressMap = await getCourseProgressMap(userId, purchasedCourseIds);
+
+    const coursesWithProgress: CourseWithProgressWithCategory[] = courses.map(
+      (course) => {
         if (course.purchases.length === 0) {
           return {
             ...course,
             progress: null,
-          }
+          };
         }
-
-        const progressPercentage = await getProgress(userId, course.id);
 
         return {
           ...course,
-          progress: progressPercentage,
+          progress: progressMap[course.id] ?? 0,
         };
-      })
+      }
     );
 
     return coursesWithProgress;

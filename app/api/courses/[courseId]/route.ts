@@ -1,5 +1,5 @@
 import Mux from "@mux/mux-node";
-import { auth } from "@clerk/nextjs";
+import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
 import { db } from "@/lib/db";
@@ -38,10 +38,14 @@ export async function DELETE(
       return new NextResponse("Not found", { status: 404 });
     }
 
-    for (const chapter of course.chapters) {
-      if (chapter.muxData?.assetId) {
-        await Video.Assets.del(chapter.muxData.assetId);
-      }
+    const muxAssetIds = course.chapters
+      .map((chapter) => chapter.muxData?.assetId)
+      .filter((assetId): assetId is string => Boolean(assetId));
+
+    if (muxAssetIds.length) {
+      await Promise.allSettled(
+        muxAssetIds.map((assetId) => Video.Assets.del(assetId))
+      );
     }
 
     const deletedCourse = await db.course.delete({

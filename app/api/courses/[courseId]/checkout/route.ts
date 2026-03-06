@@ -1,5 +1,5 @@
 import Stripe from "stripe";
-import { currentUser } from "@clerk/nextjs";
+import { currentUser } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
 import { db } from "@/lib/db";
@@ -16,21 +16,30 @@ export async function POST(
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const course = await db.course.findUnique({
-      where: {
-        id: params.courseId,
-        isPublished: true,
-      }
-    });
-
-    const purchase = await db.purchase.findUnique({
-      where: {
-        userId_courseId: {
-          userId: user.id,
-          courseId: params.courseId
+    let [course, purchase, stripeCustomer] = await Promise.all([
+      db.course.findUnique({
+        where: {
+          id: params.courseId,
+          isPublished: true,
         }
-      }
-    });
+      }),
+      db.purchase.findUnique({
+        where: {
+          userId_courseId: {
+            userId: user.id,
+            courseId: params.courseId
+          }
+        }
+      }),
+      db.stripeCustomer.findUnique({
+        where: {
+          userId: user.id,
+        },
+        select: {
+          stripeCustomerId: true,
+        }
+      }),
+    ]);
 
     if (purchase) {
       return new NextResponse("Already purchased", { status: 400 });
@@ -53,15 +62,6 @@ export async function POST(
         }
       }
     ];
-
-    let stripeCustomer = await db.stripeCustomer.findUnique({
-      where: {
-        userId: user.id,
-      },
-      select: {
-        stripeCustomerId: true,
-      }
-    });
 
     if (!stripeCustomer) {
       const customer = await stripe.customers.create({

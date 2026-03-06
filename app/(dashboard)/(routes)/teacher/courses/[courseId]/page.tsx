@@ -1,4 +1,4 @@
-import { auth } from "@clerk/nextjs";
+import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { CircleDollarSign, File, LayoutDashboard, ListChecks } from "lucide-react";
 
@@ -26,30 +26,31 @@ const CourseIdPage = async ({
     return redirect("/");
   }
 
-  const course = await db.course.findUnique({
-    where: {
-      id: params.courseId,
-      userId
-    },
-    include: {
-      chapters: {
-        orderBy: {
-          position: "asc",
+  const [course, categories] = await Promise.all([
+    db.course.findUnique({
+      where: {
+        id: params.courseId,
+        userId
+      },
+      include: {
+        chapters: {
+          orderBy: {
+            position: "asc",
+          },
+        },
+        attachments: {
+          orderBy: {
+            createdAt: "desc",
+          },
         },
       },
-      attachments: {
-        orderBy: {
-          createdAt: "desc",
-        },
+    }),
+    db.category.findMany({
+      orderBy: {
+        name: "asc",
       },
-    },
-  });
-
-  const categories = await db.category.findMany({
-    orderBy: {
-      name: "asc",
-    },
-  });
+    }),
+  ]);
 
   if (!course) {
     return redirect("/");

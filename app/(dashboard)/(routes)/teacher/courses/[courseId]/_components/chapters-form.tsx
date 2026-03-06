@@ -58,6 +58,7 @@ export const ChaptersForm = ({
     try {
       await axios.post(`/api/courses/${courseId}/chapters`, values);
       toast.success("Chapter created");
+      form.reset({ title: "" });
       toggleCreating();
       router.refresh();
     } catch {

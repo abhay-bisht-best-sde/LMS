@@ -16,11 +16,13 @@ interface CourseMobileSidebarProps {
     })[];
   };
   progressCount: number;
+  isPurchased: boolean;
 };
 
 export const CourseMobileSidebar = ({ 
   course,
   progressCount,
+  isPurchased,
 }: CourseMobileSidebarProps) => {
   return (
     <Sheet>
@@ -31,6 +33,7 @@ export const CourseMobileSidebar = ({
         <CourseSidebar
           course={course}
           progressCount={progressCount}
+          isPurchased={isPurchased}
         />
       </SheetContent>
     </Sheet>

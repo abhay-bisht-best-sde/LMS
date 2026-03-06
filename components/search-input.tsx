@@ -9,26 +9,36 @@ import { Input } from "@/components/ui/input";
 import { useDebounce } from "@/hooks/use-debounce";
 
 export const SearchInput = () => {
-  const [value, setValue] = useState("")
+  const searchParams = useSearchParams();
+  const currentTitle = searchParams.get("title") || "";
+
+  const [value, setValue] = useState(currentTitle)
   const debouncedValue = useDebounce(value);
 
-  const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
 
   const currentCategoryId = searchParams.get("categoryId");
 
   useEffect(() => {
+    setValue(currentTitle);
+  }, [currentTitle]);
+
+  useEffect(() => {
+    const normalizedTitle = debouncedValue.trim();
     const url = qs.stringifyUrl({
       url: pathname,
       query: {
         categoryId: currentCategoryId,
-        title: debouncedValue,
+        title: normalizedTitle,
       }
     }, { skipEmptyString: true, skipNull: true });
 
-    router.push(url);
-  }, [debouncedValue, currentCategoryId, router, pathname])
+    const currentUrl = `${pathname}${searchParams.toString() ? `?${searchParams.toString()}` : ""}`;
+    if (url !== currentUrl) {
+      router.replace(url);
+    }
+  }, [debouncedValue, currentCategoryId, router, pathname, searchParams])
 
   return (
     <div className="relative">
