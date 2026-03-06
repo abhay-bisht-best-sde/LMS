@@ -1,7 +1,5 @@
 # LMS Platform: Next.js 13,  React, Stripe, Mux, Prisma, Tailwind, MySQL
 
-This is a repository for Build an LMS Platform: Next.js 13,  React, Stripe, Mux, Prisma, Tailwind, MySQL
-
 Key Features:
 
 - Browse & Filter Courses

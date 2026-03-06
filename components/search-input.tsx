@@ -12,7 +12,8 @@ export const SearchInput = () => {
   const searchParams = useSearchParams();
   const currentTitle = searchParams.get("title") || "";
 
-  const [value, setValue] = useState(currentTitle)
+  const [value, setValue] = useState(currentTitle);
+  const [hasUserInput, setHasUserInput] = useState(false);
   const debouncedValue = useDebounce(value);
 
   const router = useRouter();
@@ -25,6 +26,10 @@ export const SearchInput = () => {
   }, [currentTitle]);
 
   useEffect(() => {
+    if (!hasUserInput) {
+      return;
+    }
+
     const normalizedTitle = debouncedValue.trim();
     const url = qs.stringifyUrl({
       url: pathname,
@@ -38,7 +43,7 @@ export const SearchInput = () => {
     if (url !== currentUrl) {
       router.replace(url);
     }
-  }, [debouncedValue, currentCategoryId, router, pathname, searchParams])
+  }, [debouncedValue, currentCategoryId, router, pathname, searchParams, hasUserInput]);
 
   return (
     <div className="relative">
@@ -46,11 +51,14 @@ export const SearchInput = () => {
         className="h-4 w-4 absolute top-3 left-3 text-slate-600"
       />
       <Input
-        onChange={(e) => setValue(e.target.value)}
+        onChange={(e) => {
+          setHasUserInput(true);
+          setValue(e.target.value);
+        }}
         value={value}
         className="w-full md:w-[300px] pl-9 rounded-full bg-slate-100 focus-visible:ring-slate-200"
         placeholder="Search for a course"
       />
     </div>
-  )
-}
+  );
+};
